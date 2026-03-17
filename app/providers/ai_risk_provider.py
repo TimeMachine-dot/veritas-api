@@ -58,9 +58,9 @@ def _tokenize(text: str) -> list[str]:
 
 
 def _risk_from_score(score: float) -> str:
-    if score >= 0.75:
+    if score >= 0.70:
         return "Alto"
-    if score >= 0.45:
+    if score >= 0.30:
         return "Medio"
     if score >= 0:
         return "Bajo"

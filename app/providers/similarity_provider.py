@@ -27,9 +27,9 @@ def _tokenize(text: str) -> list[str]:
 
 
 def _risk_from_similarity(score: float) -> str:
-    if score >= 60:
+    if score >= 55:
         return "Alto"
-    if score >= 30:
+    if score >= 20:
         return "Medio"
     if score >= 0:
         return "Bajo"
