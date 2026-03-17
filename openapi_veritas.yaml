@@ -9,15 +9,15 @@ servers:
 
 components:
   securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
 
   schemas:
     TextRequest:
       type: object
-      required: [text]
+      required:
+        - text
       properties:
         text:
           type: string
@@ -25,7 +25,36 @@ components:
         language:
           type: string
           default: es
+          description: Idioma principal del texto
         title:
+          type: string
+          description: Título opcional del documento
+        DocumentAnalysisResponse:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        similarity:
+          $ref: '#/components/schemas/SimilarityResponse'
+        ai_risk:
+          $ref: '#/components/schemas/AIRiskResponse'
+        overall_risk:
+          type: string
+          enum:
+            - Bajo
+            - Medio
+            - Alto
+            - Indeterminado
+        summary:
+          type: string
+        conclusion:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+        disclaimer:
           type: string
 
     SimilarityMatch:
@@ -42,6 +71,12 @@ components:
           type: number
         source_type:
           type: string
+          enum:
+            - web
+            - paper
+            - student_paper
+            - internal
+            - unknown
         note:
           type: string
           nullable: true
@@ -53,9 +88,20 @@ components:
           type: number
         risk_level:
           type: string
-          enum: [Bajo, Medio, Alto, Indeterminado]
+          enum:
+            - Bajo
+            - Medio
+            - Alto
+            - Indeterminado
         likely_issue:
           type: string
+          enum:
+            - sin_hallazgos_relevantes
+            - coincidencias_convencionales
+            - mala_citacion_potencial
+            - parafraseo_cercano_potencial
+            - dependencia_fuerte_de_fuentes
+            - revision_manual_urgente
         matches:
           type: array
           items:
@@ -74,6 +120,10 @@ components:
           type: string
         signal_strength:
           type: string
+          enum:
+            - débil
+            - moderada
+            - fuerte
 
     AIRiskResponse:
       type: object
@@ -82,7 +132,11 @@ components:
           type: number
         risk_level:
           type: string
-          enum: [Bajo, Medio, Alto, Indeterminado]
+          enum:
+            - Bajo
+            - Medio
+            - Alto
+            - Indeterminado
         segments:
           type: array
           items:
@@ -92,24 +146,52 @@ components:
         disclaimer:
           type: string
 
-security:
-  - ApiKeyAuth: []
-
 paths:
   /health:
     get:
       operationId: healthCheck
       summary: Verifica estado de la API
+      security: []
       responses:
         '200':
           description: API activa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  environment:
+                    type: string
+    /analyze_document:
+    post:
+      operationId: analyzeDocument
+      summary: Ejecuta un análisis combinado de similitud, riesgo IA y conclusión general
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TextRequest'
+      responses:
+        '200':
+          description: Resultado combinado del análisis del documento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentAnalysisResponse'
+        '401':
+          description: No autorizado                  
 
   /check_similarity:
     post:
       operationId: checkSimilarity
       summary: Analiza similitud textual y coincidencias relevantes
       security:
-        - ApiKeyAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -123,13 +205,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimilarityResponse'
+        '401':
+          description: No autorizado
 
   /check_ai_risk:
     post:
       operationId: checkAiRisk
       summary: Estima señales compatibles con uso de IA
       security:
-        - ApiKeyAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -143,3 +227,5 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AIRiskResponse'
+        '401':
+          description: No autorizado
