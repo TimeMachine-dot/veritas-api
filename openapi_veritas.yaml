@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Veritas Academic API
-  version: 1.0.0
-  description: API para analizar similitud textual y riesgo compatible con uso de IA.
+  version: 1.1.0
+  description: API para analizar similitud textual, riesgo compatible con uso de IA y análisis combinado.
 
 servers:
   - url: https://veritas-api-ujcl.onrender.com
@@ -29,33 +29,6 @@ components:
         title:
           type: string
           description: Título opcional del documento
-        DocumentAnalysisResponse:
-      type: object
-      properties:
-        title:
-          type: string
-          nullable: true
-        similarity:
-          $ref: '#/components/schemas/SimilarityResponse'
-        ai_risk:
-          $ref: '#/components/schemas/AIRiskResponse'
-        overall_risk:
-          type: string
-          enum:
-            - Bajo
-            - Medio
-            - Alto
-            - Indeterminado
-        summary:
-          type: string
-        conclusion:
-          type: string
-        recommendations:
-          type: array
-          items:
-            type: string
-        disclaimer:
-          type: string
 
     SimilarityMatch:
       type: object
@@ -146,6 +119,34 @@ components:
         disclaimer:
           type: string
 
+    DocumentAnalysisResponse:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        similarity:
+          $ref: '#/components/schemas/SimilarityResponse'
+        ai_risk:
+          $ref: '#/components/schemas/AIRiskResponse'
+        overall_risk:
+          type: string
+          enum:
+            - Bajo
+            - Medio
+            - Alto
+            - Indeterminado
+        summary:
+          type: string
+        conclusion:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+        disclaimer:
+          type: string
+
 paths:
   /health:
     get:
@@ -164,7 +165,8 @@ paths:
                     type: string
                   environment:
                     type: string
-    /analyze_document:
+
+  /analyze_document:
     post:
       operationId: analyzeDocument
       summary: Ejecuta un análisis combinado de similitud, riesgo IA y conclusión general
@@ -184,7 +186,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocumentAnalysisResponse'
         '401':
-          description: No autorizado                  
+          description: No autorizado
 
   /check_similarity:
     post:
