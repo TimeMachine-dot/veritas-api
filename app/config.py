@@ -14,5 +14,7 @@ class Settings(BaseSettings):
     similarity_provider_api_key: str | None = None
     ai_risk_provider_api_key: str | None = None
 
+    database_url: str | None = None
+
 
 settings = Settings()
