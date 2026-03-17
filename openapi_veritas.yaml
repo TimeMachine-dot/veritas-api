@@ -1,0 +1,145 @@
+openapi: 3.1.0
+info:
+  title: Veritas Academic API
+  version: 1.0.0
+  description: API para analizar similitud textual y riesgo compatible con uso de IA.
+
+servers:
+  - url: https://veritas-api-ujcl.onrender.com
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    TextRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          description: Texto a analizar
+        language:
+          type: string
+          default: es
+        title:
+          type: string
+
+    SimilarityMatch:
+      type: object
+      properties:
+        text_span:
+          type: string
+        source_title:
+          type: string
+        source_url:
+          type: string
+          nullable: true
+        match_percent:
+          type: number
+        source_type:
+          type: string
+        note:
+          type: string
+          nullable: true
+
+    SimilarityResponse:
+      type: object
+      properties:
+        overall_similarity:
+          type: number
+        risk_level:
+          type: string
+          enum: [Bajo, Medio, Alto, Indeterminado]
+        likely_issue:
+          type: string
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimilarityMatch'
+        notes:
+          type: string
+        disclaimer:
+          type: string
+
+    SuspiciousSegment:
+      type: object
+      properties:
+        text_span:
+          type: string
+        reason:
+          type: string
+        signal_strength:
+          type: string
+
+    AIRiskResponse:
+      type: object
+      properties:
+        ai_risk_score:
+          type: number
+        risk_level:
+          type: string
+          enum: [Bajo, Medio, Alto, Indeterminado]
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuspiciousSegment'
+        notes:
+          type: string
+        disclaimer:
+          type: string
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Verifica estado de la API
+      responses:
+        '200':
+          description: API activa
+
+  /check_similarity:
+    post:
+      operationId: checkSimilarity
+      summary: Analiza similitud textual y coincidencias relevantes
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TextRequest'
+      responses:
+        '200':
+          description: Resultado de similitud
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimilarityResponse'
+
+  /check_ai_risk:
+    post:
+      operationId: checkAiRisk
+      summary: Estima señales compatibles con uso de IA
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TextRequest'
+      responses:
+        '200':
+          description: Resultado de riesgo IA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIRiskResponse'
