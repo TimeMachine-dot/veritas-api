@@ -27,9 +27,9 @@ def _tokenize(text: str) -> list[str]:
 
 
 def _risk_from_similarity(score: float) -> str:
-    if score >= 55:
+    if score >= 45:
         return "Alto"
-    if score >= 20:
+    if score >= 15:
         return "Medio"
     if score >= 0:
         return "Bajo"
@@ -57,13 +57,11 @@ def run_similarity_check(text: str, language: str = "es") -> dict:
     repeated_sentences = {k: v for k, v in sentence_counts.items() if v > 1}
     repeated_paragraphs = {k: v for k, v in paragraph_counts.items() if v > 1}
 
-    # Repetición de n-gramas largos
     ngram_counts = Counter(_ngrams(tokens, 8))
     repeated_ngrams = {k: v for k, v in ngram_counts.items() if v > 2}
 
     matches = []
 
-    # Recuperar textos originales repetidos
     for original in sentences:
         norm = _normalize_text(original)
         if norm in repeated_sentences and len(original) > 60:
@@ -104,7 +102,6 @@ def run_similarity_check(text: str, language: str = "es") -> dict:
             }
         )
 
-    # Score
     repeated_sentence_penalty = min(sum(v - 1 for v in repeated_sentences.values()) * 10, 35)
     repeated_paragraph_penalty = min(sum(v - 1 for v in repeated_paragraphs.values()) * 20, 40)
     repeated_ngram_penalty = min(len(repeated_ngrams) * 3, 20)
