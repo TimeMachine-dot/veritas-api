@@ -60,7 +60,7 @@ def _tokenize(text: str) -> list[str]:
 def _risk_from_score(score: float) -> str:
     if score >= 0.70:
         return "Alto"
-    if score >= 0.30:
+    if score >= 0.25:
         return "Medio"
     if score >= 0:
         return "Bajo"
@@ -95,20 +95,15 @@ def run_ai_risk_check(text: str, language: str = "es") -> dict:
     avg_sentence_len = sum(sentence_lengths) / len(sentence_lengths) if sentence_lengths else 0
     avg_paragraph_len = sum(paragraph_lengths) / len(paragraph_lengths) if paragraph_lengths else 0
 
-    # Uniformidad de párrafos
     similar_paragraph_sizes = 0
     if len(paragraph_lengths) >= 4:
         avg_len = avg_paragraph_len
         similar_paragraph_sizes = sum(1 for x in paragraph_lengths if abs(x - avg_len) <= 8)
 
-    # Frases genéricas
     lower_text = clean_text.lower()
     generic_hits = sum(lower_text.count(p) for p in GENERIC_PHRASES)
-
-    # Especificidad real reduce sospecha
     specificity_hits = sum(lower_text.count(p) for p in SPECIFICITY_HINTS)
 
-    # Repetición de inicios de oración
     sentence_starts = []
     for s in sentences:
         toks = _tokenize(s)
@@ -116,37 +111,46 @@ def run_ai_risk_check(text: str, language: str = "es") -> dict:
             sentence_starts.append(" ".join(toks[:4]))
     repeated_starts = sum(c - 1 for c in Counter(sentence_starts).values() if c > 1)
 
-    # Repetición de bigramas frecuentes
     bigrams = list(zip(tokens, tokens[1:]))
     bigram_counts = Counter(bigrams)
     repeated_bigrams = sum(c - 2 for c in bigram_counts.values() if c >= 3)
 
-    # Score heurístico
     score = 0.0
 
+    # Baja diversidad léxica
     if lexical_diversity < 0.42:
         score += 0.18
     elif lexical_diversity < 0.50:
         score += 0.10
 
+    # Longitud de oraciones muy “limpia” y estable
     if 16 <= avg_sentence_len <= 24:
         score += 0.08
 
+    # Uniformidad estructural de párrafos
     if similar_paragraph_sizes >= max(4, len(paragraph_lengths) // 2):
         score += 0.12
 
-    score += min(generic_hits * 0.06, 0.24)
+    # Más sensibilidad a frases genéricas
+    score += min(generic_hits * 0.07, 0.30)
+
+    # Repetición de arranques de oración
     score += min(repeated_starts * 0.05, 0.15)
+
+    # Repetición de combinaciones léxicas
     score += min(repeated_bigrams * 0.01, 0.10)
 
-    # Reducir sospecha si hay señales de especificidad metodológica/contextual
+    # La especificidad reduce sospecha
     score -= min(specificity_hits * 0.03, 0.18)
+
+    # Castigo adicional si el texto es muy general y no tiene anclajes concretos
+    if generic_hits >= 6 and specificity_hits == 0:
+        score += 0.08
 
     score = max(0.0, min(round(score, 2), 0.95))
 
     segments = []
 
-    # Señalar frases genéricas concretas
     for s in sentences:
         lower_s = s.lower()
         matched = [p for p in GENERIC_PHRASES if p in lower_s]
@@ -161,7 +165,6 @@ def run_ai_risk_check(text: str, language: str = "es") -> dict:
         if len(segments) >= 3:
             break
 
-    # Si no hay suficientes segmentos, añade uno por uniformidad
     if len(segments) < 3 and similar_paragraph_sizes >= max(4, len(paragraph_lengths) // 2):
         segments.append(
             {
