@@ -59,17 +59,6 @@ class DocumentAnalysisResponse(BaseModel):
     conclusion: str
     recommendations: list[str]
     disclaimer: str
-class StoredDocumentAnalysisResponse(DocumentAnalysisResponse):
-    analysis_id: int | None = None
-class DocumentAnalysisResponse(BaseModel):
-    title: str | None = None
-    similarity: SimilarityResponse
-    ai_risk: AIRiskResponse
-    overall_risk: RiskLevel
-    summary: str
-    conclusion: str
-    recommendations: list[str]
-    disclaimer: str
 
 
 class StoredDocumentAnalysisResponse(DocumentAnalysisResponse):
