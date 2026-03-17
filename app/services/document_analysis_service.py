@@ -18,14 +18,11 @@ def _combine_overall_risk(similarity_result: dict, ai_result: dict) -> str:
     sim_level = similarity_result.get("risk_level", "Indeterminado")
     ai_level = ai_result.get("risk_level", "Indeterminado")
 
-    # Regla principal
     if sim_score >= 55 or ai_score >= 0.70:
         return "Alto"
-
     if sim_score >= 20 or ai_score >= 0.30:
         return "Medio"
 
-    # Respaldo por niveles categóricos
     max_level = max(_risk_value(sim_level), _risk_value(ai_level))
     if max_level >= 3:
         return "Alto"
@@ -33,7 +30,6 @@ def _combine_overall_risk(similarity_result: dict, ai_result: dict) -> str:
         return "Medio"
     if max_level >= 1:
         return "Bajo"
-
     return "Indeterminado"
 
 
@@ -100,7 +96,6 @@ def _build_recommendations(similarity_result: dict, ai_result: dict, overall_ris
     if not recommendations:
         recommendations.append("Mantener revisión humana básica y contraste con el contexto académico del documento.")
 
-    # Quitar duplicados conservando orden
     unique = []
     seen = set()
     for item in recommendations:
