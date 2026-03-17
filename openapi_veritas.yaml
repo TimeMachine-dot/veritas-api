@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Veritas Academic API
-  version: 1.1.0
-  description: API para analizar similitud textual, riesgo compatible con uso de IA y análisis combinado.
+  version: 1.2.0
+  description: API para analizar similitud textual, riesgo compatible con uso de IA, análisis combinado y almacenamiento.
 
 servers:
   - url: https://veritas-api-ujcl.onrender.com
@@ -28,7 +28,8 @@ components:
           description: Idioma principal del texto
         title:
           type: string
-          description: Título opcional del documento
+          nullable: true
+          description: Titulo opcional del documento
 
     SimilarityMatch:
       type: object
@@ -147,6 +148,15 @@ components:
         disclaimer:
           type: string
 
+    StoredDocumentAnalysisResponse:
+      allOf:
+        - $ref: '#/components/schemas/DocumentAnalysisResponse'
+        - type: object
+          properties:
+            analysis_id:
+              type: integer
+              nullable: true
+
 paths:
   /health:
     get:
@@ -184,7 +194,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DocumentAnalysisResponse'
+                $ref: '#/components/schemas/StoredDocumentAnalysisResponse'
         '401':
           description: No autorizado
 
