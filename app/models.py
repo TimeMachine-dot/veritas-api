@@ -8,7 +8,7 @@ RiskLevel = Literal["Bajo", "Medio", "Alto", "Indeterminado"]
 class TextRequest(BaseModel):
     text: str = Field(..., min_length=50, description="Texto a analizar")
     language: str = Field(default="es", description="Idioma principal del texto")
-    title: str | None = Field(default=None, description="TÃ­tulo opcional del documento")
+    title: str | None = Field(default=None, description="Título opcional del documento")
 
 
 class SimilarityMatch(BaseModel):
@@ -39,7 +39,7 @@ class SimilarityResponse(BaseModel):
 class SuspiciousSegment(BaseModel):
     text_span: str
     reason: str
-    signal_strength: Literal["dÃ©bil", "moderada", "fuerte"]
+    signal_strength: Literal["débil", "moderada", "fuerte"]
 
 
 class AIRiskResponse(BaseModel):
