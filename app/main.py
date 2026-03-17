@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
 from .auth import verify_action_api_key
@@ -11,16 +11,18 @@ from .models import (
     SimilarityResponse,
     AIRiskResponse,
     StoredDocumentAnalysisResponse,
+    AnalysisListItem,
+    AnalysisDetailResponse,
 )
 from .services.similarity_service import check_similarity
 from .services.ai_risk_service import check_ai_risk
 from .services.document_analysis_service import analyze_document
-from .services.analysis_store_service import save_analysis
+from .services.analysis_store_service import save_analysis, list_analyses, get_analysis_by_id
 
 app = FastAPI(
     title=settings.app_name,
-    version="1.2.0",
-    description="API para Veritas Académico: similitud, riesgo IA, análisis combinado y almacenamiento."
+    version="1.3.0",
+    description="API para Veritas Academico: similitud, riesgo IA, analisis combinado, almacenamiento e historial."
 )
 
 
@@ -81,4 +83,41 @@ async def api_analyze_document(
         )
 
     result["analysis_id"] = analysis_id
+    return result
+
+
+@app.get(
+    "/analyses",
+    response_model=list[AnalysisListItem],
+    tags=["history"],
+    dependencies=[Depends(verify_action_api_key)],
+)
+async def api_list_analyses(
+    limit: int = 20,
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available.")
+
+    limit = max(1, min(limit, 100))
+    return list_analyses(db, limit=limit)
+
+
+@app.get(
+    "/analyses/{analysis_id}",
+    response_model=AnalysisDetailResponse,
+    tags=["history"],
+    dependencies=[Depends(verify_action_api_key)],
+)
+async def api_get_analysis(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+) -> dict:
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available.")
+
+    result = get_analysis_by_id(db, analysis_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Analysis not found.")
+
     return result

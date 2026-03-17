@@ -1,4 +1,5 @@
-﻿from typing import Literal
+﻿from datetime import datetime
+from typing import Literal
 from pydantic import BaseModel, Field
 
 
@@ -63,3 +64,29 @@ class DocumentAnalysisResponse(BaseModel):
 
 class StoredDocumentAnalysisResponse(DocumentAnalysisResponse):
     analysis_id: int | None = None
+
+
+class AnalysisListItem(BaseModel):
+    id: int
+    title: str | None = None
+    language: str | None = None
+    overall_risk: RiskLevel | None = None
+    similarity_score: float | None = None
+    ai_risk_score: float | None = None
+    created_at: datetime
+
+
+class AnalysisDetailResponse(BaseModel):
+    id: int
+    title: str | None = None
+    language: str | None = None
+    text: str
+    similarity_score: float | None = None
+    similarity_risk: str | None = None
+    ai_risk_score: float | None = None
+    ai_risk_level: str | None = None
+    overall_risk: RiskLevel | None = None
+    summary: str | None = None
+    conclusion: str | None = None
+    recommendations: list[str]
+    created_at: datetime
