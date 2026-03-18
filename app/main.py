@@ -13,16 +13,24 @@ from .models import (
     StoredDocumentAnalysisResponse,
     AnalysisListItem,
     AnalysisDetailResponse,
+    ReferenceDocumentCreate,
+    ReferenceDocumentListItem,
+    ReferenceDocumentDetail,
 )
 from .services.similarity_service import check_similarity
 from .services.ai_risk_service import check_ai_risk
 from .services.document_analysis_service import analyze_document
 from .services.analysis_store_service import save_analysis, list_analyses, get_analysis_by_id
+from .services.reference_store_service import (
+    save_reference_document,
+    list_reference_documents,
+    get_reference_document_by_id,
+)
 
 app = FastAPI(
     title=settings.app_name,
-    version="1.3.0",
-    description="API para Veritas Academico: similitud, riesgo IA, analisis combinado, almacenamiento e historial."
+    version="1.4.0",
+    description="API para Veritas Academico: similitud, riesgo IA, analisis combinado, almacenamiento, historial y corpus de referencia."
 )
 
 
@@ -37,13 +45,76 @@ async def health() -> dict:
 
 
 @app.post(
+    "/reference_documents",
+    response_model=dict,
+    tags=["references"],
+    dependencies=[Depends(verify_action_api_key)],
+)
+async def api_create_reference_document(
+    payload: ReferenceDocumentCreate,
+    db: Session = Depends(get_db),
+) -> dict:
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available.")
+
+    document_id = save_reference_document(
+        db,
+        title=payload.title,
+        text=payload.text,
+        language=payload.language,
+        source=payload.source,
+    )
+    return {"document_id": document_id, "status": "stored"}
+
+
+@app.get(
+    "/reference_documents",
+    response_model=list[ReferenceDocumentListItem],
+    tags=["references"],
+    dependencies=[Depends(verify_action_api_key)],
+)
+async def api_list_reference_documents(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available.")
+
+    limit = max(1, min(limit, 100))
+    return list_reference_documents(db, limit=limit)
+
+
+@app.get(
+    "/reference_documents/{document_id}",
+    response_model=ReferenceDocumentDetail,
+    tags=["references"],
+    dependencies=[Depends(verify_action_api_key)],
+)
+async def api_get_reference_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+) -> dict:
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available.")
+
+    result = get_reference_document_by_id(db, document_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Reference document not found.")
+
+    return result
+
+
+@app.post(
     "/check_similarity",
     response_model=SimilarityResponse,
     tags=["analysis"],
     dependencies=[Depends(verify_action_api_key)],
 )
-async def api_check_similarity(payload: TextRequest) -> dict:
-    return await check_similarity(text=payload.text, language=payload.language)
+async def api_check_similarity(
+    payload: TextRequest,
+    db: Session = Depends(get_db),
+) -> dict:
+    return await check_similarity(text=payload.text, language=payload.language, db=db)
 
 
 @app.post(
@@ -70,6 +141,7 @@ async def api_analyze_document(
         text=payload.text,
         language=payload.language,
         title=payload.title,
+        db=db,
     )
 
     analysis_id = None

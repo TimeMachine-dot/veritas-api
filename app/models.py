@@ -90,3 +90,27 @@ class AnalysisDetailResponse(BaseModel):
     conclusion: str | None = None
     recommendations: list[str]
     created_at: datetime
+
+
+class ReferenceDocumentCreate(BaseModel):
+    title: str = Field(..., min_length=3, description="Titulo del documento de referencia")
+    text: str = Field(..., min_length=100, description="Texto del documento de referencia")
+    language: str = Field(default="es", description="Idioma principal del documento")
+    source: str | None = Field(default=None, description="Fuente opcional del documento")
+
+
+class ReferenceDocumentListItem(BaseModel):
+    id: int
+    title: str
+    language: str | None = None
+    source: str | None = None
+    created_at: datetime
+
+
+class ReferenceDocumentDetail(BaseModel):
+    id: int
+    title: str
+    text: str
+    language: str | None = None
+    source: str | None = None
+    created_at: datetime

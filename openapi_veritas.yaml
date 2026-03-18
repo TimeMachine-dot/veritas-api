@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Veritas Academic API
-  version: 1.3.0
-  description: API para analizar similitud textual, riesgo compatible con uso de IA, analisis combinado, almacenamiento e historial.
+  version: 1.4.0
+  description: API para analizar similitud textual, riesgo compatible con uso de IA, analisis combinado, almacenamiento, historial y corpus de referencia.
 
 servers:
   - url: https://veritas-api-ujcl.onrender.com
@@ -229,6 +229,59 @@ components:
           type: string
           format: date-time
 
+    ReferenceDocumentCreate:
+      type: object
+      required:
+        - title
+        - text
+      properties:
+        title:
+          type: string
+        text:
+          type: string
+        language:
+          type: string
+          default: es
+        source:
+          type: string
+          nullable: true
+
+    ReferenceDocumentListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        language:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ReferenceDocumentDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        text:
+          type: string
+        language:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
 paths:
   /health:
     get:
@@ -247,6 +300,89 @@ paths:
                     type: string
                   environment:
                     type: string
+
+  /reference_documents:
+    post:
+      operationId: createReferenceDocument
+      summary: Guarda un documento de referencia en el corpus
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferenceDocumentCreate'
+      responses:
+        '200':
+          description: Documento guardado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id:
+                    type: integer
+                  status:
+                    type: string
+        '401':
+          description: No autorizado
+        '503':
+          description: Base de datos no disponible
+
+    get:
+      operationId: listReferenceDocuments
+      summary: Lista documentos del corpus de referencia
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Lista de documentos de referencia
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReferenceDocumentListItem'
+        '401':
+          description: No autorizado
+        '503':
+          description: Base de datos no disponible
+
+  /reference_documents/{document_id}:
+    get:
+      operationId: getReferenceDocumentById
+      summary: Obtiene un documento del corpus por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: document_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Documento encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceDocumentDetail'
+        '401':
+          description: No autorizado
+        '404':
+          description: Documento no encontrado
+        '503':
+          description: Base de datos no disponible
 
   /analyze_document:
     post:
