@@ -8,6 +8,7 @@ from . import db_models
 
 from .models import (
     TextRequest,
+    ExternalSearchRequest,
     SimilarityResponse,
     AIRiskResponse,
     StoredDocumentAnalysisResponse,
@@ -16,6 +17,7 @@ from .models import (
     ReferenceDocumentCreate,
     ReferenceDocumentListItem,
     ReferenceDocumentDetail,
+    ExternalSearchResponse,
 )
 from .services.similarity_service import check_similarity
 from .services.ai_risk_service import check_ai_risk
@@ -26,11 +28,12 @@ from .services.reference_store_service import (
     list_reference_documents,
     get_reference_document_by_id,
 )
+from .services.external_search_service import external_search
 
 app = FastAPI(
     title=settings.app_name,
-    version="1.4.0",
-    description="API para Veritas Academico: similitud, riesgo IA, analisis combinado, almacenamiento, historial y corpus de referencia."
+    version="1.6.0",
+    description="API para Veritas Academico: similitud, riesgo IA, analisis combinado, almacenamiento, historial, corpus de referencia y busqueda externa."
 )
 
 
@@ -42,6 +45,16 @@ def startup_event():
 @app.get("/health", tags=["system"])
 async def health() -> dict:
     return {"status": "ok", "environment": settings.app_env}
+
+
+@app.post(
+    "/external_search",
+    response_model=ExternalSearchResponse,
+    tags=["external"],
+    dependencies=[Depends(verify_action_api_key)],
+)
+async def api_external_search(payload: ExternalSearchRequest) -> dict:
+    return await external_search(query=payload.query, limit=payload.limit)
 
 
 @app.post(

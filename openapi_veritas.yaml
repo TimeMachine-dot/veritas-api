@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Veritas Academic API
-  version: 1.5.0
-  description: API para analizar similitud textual, riesgo compatible con uso de IA, analisis combinado, almacenamiento, historial y corpus de referencia.
+  version: 1.6.0
+  description: API para analizar similitud textual, riesgo compatible con uso de IA, analisis combinado, almacenamiento, historial, corpus de referencia y busqueda externa.
 
 servers:
   - url: https://veritas-api-ujcl.onrender.com
@@ -21,15 +21,25 @@ components:
       properties:
         text:
           type: string
-          description: Texto a analizar
         language:
           type: string
           default: es
-          description: Idioma principal del texto
         title:
           type: string
           nullable: true
-          description: Titulo opcional del documento
+
+    ExternalSearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+        limit:
+          type: integer
+          default: 5
+          minimum: 1
+          maximum: 10
 
     SimilarityMatch:
       type: object
@@ -296,6 +306,53 @@ components:
           type: string
           format: date-time
 
+    ExternalSearchItem:
+      type: object
+      properties:
+        source:
+          type: string
+          enum:
+            - crossref
+            - europe_pmc
+        title:
+          type: string
+        url:
+          type: string
+          nullable: true
+        doi:
+          type: string
+          nullable: true
+        year:
+          type: string
+          nullable: true
+        authors:
+          type: string
+          nullable: true
+        journal:
+          type: string
+          nullable: true
+        match_score:
+          type: number
+        snippet:
+          type: string
+          nullable: true
+
+    ExternalSearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        total_results:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalSearchItem'
+        notes:
+          type: string
+        disclaimer:
+          type: string
+
 paths:
   /health:
     get:
@@ -305,15 +362,28 @@ paths:
       responses:
         '200':
           description: API activa
+
+  /external_search:
+    post:
+      operationId: externalSearch
+      summary: Busca posibles fuentes externas en Crossref y Europe PMC
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalSearchRequest'
+      responses:
+        '200':
+          description: Resultados de busqueda externa
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  environment:
-                    type: string
+                $ref: '#/components/schemas/ExternalSearchResponse'
+        '401':
+          description: No autorizado
 
   /reference_documents:
     post:
@@ -330,19 +400,6 @@ paths:
       responses:
         '200':
           description: Documento guardado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  document_id:
-                    type: integer
-                  status:
-                    type: string
-        '401':
-          description: No autorizado
-        '503':
-          description: Base de datos no disponible
 
     get:
       operationId: listReferenceDocuments
@@ -367,10 +424,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ReferenceDocumentListItem'
-        '401':
-          description: No autorizado
-        '503':
-          description: Base de datos no disponible
 
   /reference_documents/{document_id}:
     get:
@@ -391,12 +444,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReferenceDocumentDetail'
-        '401':
-          description: No autorizado
-        '404':
-          description: Documento no encontrado
-        '503':
-          description: Base de datos no disponible
 
   /analyze_document:
     post:
@@ -417,8 +464,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoredDocumentAnalysisResponse'
-        '401':
-          description: No autorizado
 
   /check_similarity:
     post:
@@ -439,8 +484,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimilarityResponse'
-        '401':
-          description: No autorizado
 
   /check_ai_risk:
     post:
@@ -461,8 +504,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AIRiskResponse'
-        '401':
-          description: No autorizado
 
   /analyses:
     get:
@@ -488,10 +529,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AnalysisListItem'
-        '401':
-          description: No autorizado
-        '503':
-          description: Base de datos no disponible
 
   /analyses/{analysis_id}:
     get:
@@ -512,9 +549,3 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AnalysisDetailResponse'
-        '401':
-          description: No autorizado
-        '404':
-          description: Analisis no encontrado
-        '503':
-          description: Base de datos no disponible

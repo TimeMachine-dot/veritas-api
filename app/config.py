@@ -16,5 +16,8 @@ class Settings(BaseSettings):
 
     database_url: str | None = None
 
+    crossref_mailto: str | None = None
+    external_search_limit: int = 5
+
 
 settings = Settings()

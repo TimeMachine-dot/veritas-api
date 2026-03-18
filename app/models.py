@@ -13,6 +13,11 @@ class TextRequest(BaseModel):
     title: str | None = Field(default=None, description="Titulo opcional del documento")
 
 
+class ExternalSearchRequest(BaseModel):
+    query: str = Field(..., min_length=10, description="Consulta para buscar fuentes externas")
+    limit: int = Field(default=5, ge=1, le=10, description="Cantidad maxima de resultados por fuente")
+
+
 class SimilarityMatch(BaseModel):
     text_span: str
     source_title: str
@@ -119,3 +124,23 @@ class ReferenceDocumentDetail(BaseModel):
     language: str | None = None
     source: str | None = None
     created_at: datetime
+
+
+class ExternalSearchItem(BaseModel):
+    source: Literal["crossref", "europe_pmc"]
+    title: str
+    url: str | None = None
+    doi: str | None = None
+    year: str | None = None
+    authors: str | None = None
+    journal: str | None = None
+    match_score: float
+    snippet: str | None = None
+
+
+class ExternalSearchResponse(BaseModel):
+    query: str
+    total_results: int
+    results: list[ExternalSearchItem]
+    notes: str
+    disclaimer: str
