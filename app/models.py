@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 
 RiskLevel = Literal["Bajo", "Medio", "Alto", "Indeterminado"]
+SimilarityScope = Literal["none", "internal_only", "corpus_only", "internal_and_corpus"]
 
 
 class TextRequest(BaseModel):
@@ -17,12 +18,16 @@ class SimilarityMatch(BaseModel):
     source_title: str
     source_url: str | None = None
     match_percent: float
-    source_type: Literal["web", "paper", "student_paper", "internal", "unknown"] = "unknown"
+    source_type: Literal["web", "paper", "student_paper", "internal", "reference_corpus", "unknown"] = "unknown"
     note: str | None = None
 
 
 class SimilarityResponse(BaseModel):
     overall_similarity: float = Field(..., ge=0, le=100)
+    internal_similarity_score: float = Field(default=0, ge=0, le=100)
+    corpus_similarity_score: float = Field(default=0, ge=0, le=100)
+    corpus_documents_checked: int = Field(default=0, ge=0)
+    similarity_scope: SimilarityScope = "none"
     risk_level: RiskLevel
     likely_issue: Literal[
         "sin_hallazgos_relevantes",

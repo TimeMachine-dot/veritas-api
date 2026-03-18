@@ -64,7 +64,7 @@ def compare_against_reference_corpus(
                         "source_title": doc.title,
                         "source_url": None,
                         "match_percent": round(score * 100, 2),
-                        "source_type": "internal",
+                        "source_type": "reference_corpus",
                         "note": f"Coincidencia contra documento del corpus: {doc.title}",
                     }
 

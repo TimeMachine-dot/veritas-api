@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Veritas Academic API
-  version: 1.4.0
+  version: 1.5.0
   description: API para analizar similitud textual, riesgo compatible con uso de IA, analisis combinado, almacenamiento, historial y corpus de referencia.
 
 servers:
@@ -50,6 +50,7 @@ components:
             - paper
             - student_paper
             - internal
+            - reference_corpus
             - unknown
         note:
           type: string
@@ -60,6 +61,19 @@ components:
       properties:
         overall_similarity:
           type: number
+        internal_similarity_score:
+          type: number
+        corpus_similarity_score:
+          type: number
+        corpus_documents_checked:
+          type: integer
+        similarity_scope:
+          type: string
+          enum:
+            - none
+            - internal_only
+            - corpus_only
+            - internal_and_corpus
         risk_level:
           type: string
           enum:
