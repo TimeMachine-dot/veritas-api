@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Veritas Academic API
-  version: 1.6.0
-  description: API para analizar similitud textual, riesgo compatible con uso de IA, analisis combinado, almacenamiento, historial, corpus de referencia y busqueda externa.
+  version: 1.7.0
+  description: API para analizar similitud textual, riesgo compatible con uso de IA, analisis combinado, almacenamiento, historial, corpus de referencia y busqueda externa automatica.
 
 servers:
   - url: https://veritas-api-ujcl.onrender.com
@@ -140,6 +140,37 @@ components:
         disclaimer:
           type: string
 
+    ExternalSearchItem:
+      type: object
+      properties:
+        source:
+          type: string
+          enum:
+            - crossref
+            - europe_pmc
+        title:
+          type: string
+        url:
+          type: string
+          nullable: true
+        doi:
+          type: string
+          nullable: true
+        year:
+          type: string
+          nullable: true
+        authors:
+          type: string
+          nullable: true
+        journal:
+          type: string
+          nullable: true
+        match_score:
+          type: number
+        snippet:
+          type: string
+          nullable: true
+
     DocumentAnalysisResponse:
       type: object
       properties:
@@ -157,6 +188,15 @@ components:
             - Medio
             - Alto
             - Indeterminado
+        external_search_triggered:
+          type: boolean
+        external_query:
+          type: string
+          nullable: true
+        external_candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalSearchItem'
         summary:
           type: string
         conclusion:
@@ -306,37 +346,6 @@ components:
           type: string
           format: date-time
 
-    ExternalSearchItem:
-      type: object
-      properties:
-        source:
-          type: string
-          enum:
-            - crossref
-            - europe_pmc
-        title:
-          type: string
-        url:
-          type: string
-          nullable: true
-        doi:
-          type: string
-          nullable: true
-        year:
-          type: string
-          nullable: true
-        authors:
-          type: string
-          nullable: true
-        journal:
-          type: string
-          nullable: true
-        match_score:
-          type: number
-        snippet:
-          type: string
-          nullable: true
-
     ExternalSearchResponse:
       type: object
       properties:
@@ -382,8 +391,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExternalSearchResponse'
-        '401':
-          description: No autorizado
 
   /reference_documents:
     post:

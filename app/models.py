@@ -61,11 +61,26 @@ class AIRiskResponse(BaseModel):
     disclaimer: str
 
 
+class ExternalSearchItem(BaseModel):
+    source: Literal["crossref", "europe_pmc"]
+    title: str
+    url: str | None = None
+    doi: str | None = None
+    year: str | None = None
+    authors: str | None = None
+    journal: str | None = None
+    match_score: float
+    snippet: str | None = None
+
+
 class DocumentAnalysisResponse(BaseModel):
     title: str | None = None
     similarity: SimilarityResponse
     ai_risk: AIRiskResponse
     overall_risk: RiskLevel
+    external_search_triggered: bool = False
+    external_query: str | None = None
+    external_candidates: list[ExternalSearchItem] = []
     summary: str
     conclusion: str
     recommendations: list[str]
@@ -124,18 +139,6 @@ class ReferenceDocumentDetail(BaseModel):
     language: str | None = None
     source: str | None = None
     created_at: datetime
-
-
-class ExternalSearchItem(BaseModel):
-    source: Literal["crossref", "europe_pmc"]
-    title: str
-    url: str | None = None
-    doi: str | None = None
-    year: str | None = None
-    authors: str | None = None
-    journal: str | None = None
-    match_score: float
-    snippet: str | None = None
 
 
 class ExternalSearchResponse(BaseModel):
